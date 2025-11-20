@@ -1,6 +1,6 @@
 // pages/index.js
 import React, { useState, useEffect } from 'react';
-//import '../styles/globals.css';
+import '../styles/globals.css';
 
 // Importar nuestros módulos
 import MapCanvas from '../components/MapCanvas';
@@ -8,10 +8,11 @@ import ControlPanel from '../components/ControlPanel';
 import LogPanel from '../components/LogPanel';
 import { construirAdyacencia } from '../utils/mapHelpers';
 
-// Detectamos si estamos en producción (Vercel) o en desarrollo local
+// Detectar entorno para la URL
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? '/api/solve'                     // En Vercel (Ruta relativa)
-  : 'http://127.0.0.1:8000/api/solve'; // En Local (Puerto separado)
+  ? '/api/solve' 
+  : 'http://127.0.0.1:8000/api/solve'; 
+
 const COLORES_DISPONIBLES = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
 
 export default function MapColoringApp() {
@@ -60,18 +61,18 @@ export default function MapColoringApp() {
     }
   };
 
-  // Lógica inteligente para cargar ejemplos según el modo
   const handleCargarEjemplo = () => {
     if (animando) return;
     resetear();
 
     if (modo === 'voronoi') {
+      // Puntos dispersos para Voronoi
       setPuntos([[100,100],[200,100],[300,100],[150,200],[250,200],[100,300],[200,300],[300,300]]);
       setEnlaces([]);
     } else {
-      // Ejemplo de Grafo (Una casita o estrella)
+      // Ejemplo de Grafo (Casa)
       const ptsGrafo = [[300, 50], [200, 150], [400, 150], [200, 350], [400, 350]];
-      const linksGrafo = [[0,1], [0,2], [1,2], [1,3], [2,4], [3,4], [1,4]]; // Conexiones complejas
+      const linksGrafo = [[0,1], [0,2], [1,2], [1,3], [2,4], [3,4], [1,4]];
       setPuntos(ptsGrafo);
       setEnlaces(linksGrafo);
     }
@@ -101,12 +102,20 @@ export default function MapColoringApp() {
         body: JSON.stringify({ adjacency: adyacencia, colors: COLORES_DISPONIBLES.slice(0, numColores) }),
       });
       const data = await res.json();
-      if (data.steps) {
+      
+      if (data.status === 'impossible') {
+        setMensajeEstado("¡Imposible resolver con estos colores!");
+        setHistorialPasos(data.steps || []);
+        setAnimando(true); // Mostramos el intento fallido
+      } else if (data.steps) {
         setHistorialPasos(data.steps);
         setAnimando(true);
-        setMensajeEstado("Animando...");
+        setMensajeEstado("Animando solución...");
       }
-    } catch (e) { console.error(e); setMensajeEstado("Error de red"); }
+    } catch (e) { 
+      console.error(e); 
+      setMensajeEstado("Error de red: Verifica que el Backend Python esté corriendo."); 
+    }
   };
 
   // --- MOTOR DE ANIMACIÓN ---
@@ -129,7 +138,6 @@ export default function MapColoringApp() {
     <div className="min-h-screen bg-gray-900 text-white font-sans p-4 flex flex-col items-center">
       <h1 className="text-4xl font-bold mb-8 text-blue-400 mt-4">Visualizador de Coloreo de Grafos</h1>
       
-      {/* AQUI AUMENTAMOS EL ANCHO MAXIMO A 95vw (Casi toda la pantalla) */}
       <div className="w-full max-w-[95vw] grid grid-cols-1 lg:grid-cols-4 gap-8">
         
         {/* COLUMNA 1: CONTROLES */}
@@ -145,7 +153,7 @@ export default function MapColoringApp() {
           />
         </div>
 
-        {/* COLUMNA 2 y 3: MAPA (Lienzo más grande) */}
+        {/* COLUMNA 2 y 3: MAPA */}
         <div className="lg:col-span-2">
           <MapCanvas 
             modo={modo} puntos={puntos} enlaces={enlaces}
