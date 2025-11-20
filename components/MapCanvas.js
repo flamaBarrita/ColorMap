@@ -16,8 +16,9 @@ export default function MapCanvas({
 }) {
   const svgRef = useRef(null);
   
-  // --- CORRECCIÓN: Solo calculamos Voronoi si estamos en ese modo ---
-  const poligonos = modo === 'voronoi' ? generarPoligonosVoronoi(props.puntos) : [];
+  // --- CORRECCIÓN AQUÍ ---
+  // Usamos 'modo' directamente, NO 'props.modo'
+  const poligonos = modo === 'voronoi' ? generarPoligonosVoronoi(puntos) : [];
 
   const descargarSVG = () => {
     if (!svgRef.current) return;
