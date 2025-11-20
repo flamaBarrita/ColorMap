@@ -1,6 +1,6 @@
 // pages/index.js
 import React, { useState, useEffect } from 'react';
-import '../styles/globals.css';
+
 
 // Importar nuestros módulos
 import MapCanvas from '../components/MapCanvas';
