@@ -77,7 +77,7 @@ def resolver_recursivo(nodos_restantes: List[str], colores_disponibles: List[str
 
 # --- ENDPOINT (API) ---
 
-@app.post("api/solve")
+@app.post("/api/solve")
 def resolver_mapa(datos: DatosEntrada):
     # Variables para la ejecución
     historial_pasos = []
