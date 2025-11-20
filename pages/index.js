@@ -1,6 +1,6 @@
 // pages/index.js (CÓDIGO LIMPIO Y DEFINITIVO)
 import React, { useState, useEffect } from 'react';
-import '../styles/globals.css';
+//import '../styles/globals.css';
 
 // Importamos los componentes (Asegúrate de que existan en la carpeta components)
 import MapCanvas from '../components/MapCanvas';
