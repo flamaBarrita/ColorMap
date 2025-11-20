@@ -1,14 +1,14 @@
-// pages/index.js
+// pages/index.js (CÓDIGO LIMPIO Y DEFINITIVO)
 import React, { useState, useEffect } from 'react';
+import '../styles/globals.css';
 
-
-// Importar nuestros módulos
+// Importamos los componentes (Asegúrate de que existan en la carpeta components)
 import MapCanvas from '../components/MapCanvas';
 import ControlPanel from '../components/ControlPanel';
 import LogPanel from '../components/LogPanel';
 import { construirAdyacencia } from '../utils/mapHelpers';
 
-// Detectar entorno para la URL
+// Configuración de la URL del Backend
 const API_URL = process.env.NODE_ENV === 'production' 
   ? '/api/solve' 
   : 'http://127.0.0.1:8000/api/solve'; 
@@ -32,7 +32,7 @@ export default function MapColoringApp() {
   const [velocidad, setVelocidad] = useState(200);
   const [mensajeEstado, setMensajeEstado] = useState("Listo para comenzar.");
 
-  // --- LÓGICA DE INTERACCIÓN ---
+  // --- INTERACCIONES ---
   const handleCanvasClick = (e) => {
     if (animando) return;
     const svgRect = e.target.closest('svg').getBoundingClientRect();
@@ -64,19 +64,16 @@ export default function MapColoringApp() {
   const handleCargarEjemplo = () => {
     if (animando) return;
     resetear();
-
     if (modo === 'voronoi') {
-      // Puntos dispersos para Voronoi
       setPuntos([[100,100],[200,100],[300,100],[150,200],[250,200],[100,300],[200,300],[300,300]]);
       setEnlaces([]);
     } else {
-      // Ejemplo de Grafo (Casa)
       const ptsGrafo = [[300, 50], [200, 150], [400, 150], [200, 350], [400, 350]];
       const linksGrafo = [[0,1], [0,2], [1,2], [1,3], [2,4], [3,4], [1,4]];
       setPuntos(ptsGrafo);
       setEnlaces(linksGrafo);
     }
-    setMensajeEstado("Ejemplo cargado exitosamente.");
+    setMensajeEstado("Ejemplo cargado.");
   };
 
   const handleLimpiar = () => {
@@ -92,7 +89,7 @@ export default function MapColoringApp() {
 
   const handleResolver = async () => {
     resetear();
-    setMensajeEstado("Calculando...");
+    setMensajeEstado("Conectando con Python...");
     const adyacencia = construirAdyacencia(puntos, enlaces, modo);
     
     try {
@@ -101,20 +98,19 @@ export default function MapColoringApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adjacency: adyacencia, colors: COLORES_DISPONIBLES.slice(0, numColores) }),
       });
+      
+      if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+      
       const data = await res.json();
       
-      if (data.status === 'impossible') {
-        setMensajeEstado("¡Imposible resolver con estos colores!");
-        setHistorialPasos(data.steps || []);
-        setAnimando(true); // Mostramos el intento fallido
-      } else if (data.steps) {
+      if (data.steps) {
         setHistorialPasos(data.steps);
         setAnimando(true);
-        setMensajeEstado("Animando solución...");
+        setMensajeEstado(data.status === 'impossible' ? "Sin solución posible." : "Animando...");
       }
     } catch (e) { 
       console.error(e); 
-      setMensajeEstado("Error de red: Verifica que el Backend Python esté corriendo."); 
+      setMensajeEstado("Error: No se pudo conectar con el Backend."); 
     }
   };
 
@@ -134,13 +130,13 @@ export default function MapColoringApp() {
     return () => clearTimeout(intervalo);
   }, [animando, pausado, pasoActual, historialPasos, velocidad]);
 
+  // --- RENDERIZADO LIMPIO ---
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans p-4 flex flex-col items-center">
-      <h1 className="text-4xl font-bold mb-8 text-blue-400 mt-4">Visualizador de Coloreo de Grafos</h1>
+      <h1 className="text-4xl font-bold mb-8 text-blue-400 mt-4">Visualizador de Grafos & Backtracking</h1>
       
       <div className="w-full max-w-[95vw] grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        {/* COLUMNA 1: CONTROLES */}
+        {/* Panel Izquierdo */}
         <div className="lg:col-span-1">
           <ControlPanel 
             modo={modo} setModo={(m) => { setModo(m); handleLimpiar(); }}
@@ -153,19 +149,23 @@ export default function MapColoringApp() {
           />
         </div>
 
-        {/* COLUMNA 2 y 3: MAPA */}
+        {/* Mapa Central - AQUÍ ESTABA EL PROBLEMA, AHORA SOLO HAY UNO */}
         <div className="lg:col-span-2">
           <MapCanvas 
-            modo={modo} puntos={puntos} enlaces={enlaces}
+            modo={modo} 
+            puntos={puntos} 
+            enlaces={enlaces}
             coloresRegiones={coloresRegiones}
-            historialPasos={historialPasos} pasoActual={pasoActual}
+            historialPasos={historialPasos} 
+            pasoActual={pasoActual}
             nodoSeleccionado={nodoSeleccionado}
-            onCanvasClick={handleCanvasClick} onNodeClick={handleNodeClick}
+            onCanvasClick={handleCanvasClick} 
+            onNodeClick={handleNodeClick}
             animando={animando}
           />
         </div>
 
-        {/* COLUMNA 4: LOG */}
+        {/* Panel Derecho */}
         <div className="lg:col-span-1">
           <LogPanel 
             historialPasos={historialPasos} 
