@@ -1,4 +1,3 @@
-// components/MapCanvas.js
 import React, { useRef } from 'react';
 import { generarPoligonosVoronoi } from '../utils/mapHelpers';
 
@@ -15,7 +14,10 @@ export default function MapCanvas({
   animando 
 }) {
   const svgRef = useRef(null);
-  const poligonos = generarPoligonosVoronoi(puntos);
+  
+  // --- CORRECCIÓN CLAVE: OPTIMIZACIÓN ---
+  // Si no es modo voronoi, devolvemos un array vacío para que no pinte nada "raro"
+  const poligonos = modo === 'voronoi' ? generarPoligonosVoronoi(puntos) : [];
 
   const descargarSVG = () => {
     if (!svgRef.current) return;
@@ -31,21 +33,19 @@ export default function MapCanvas({
   };
 
   return (
-    // AUMENTADO EL HEIGHT A 600px
     <div className="bg-white rounded-2xl overflow-hidden shadow-2xl relative h-[600px] border-4 border-gray-800">
       
-      {/* INSTRUCCIONES FLOTANTES */}
       {!animando && (
         <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200 shadow-sm z-10 pointer-events-none">
           <p className="text-xs font-bold text-gray-500 uppercase mb-1">
             MODO: <span className="text-blue-600">{modo.toUpperCase()}</span>
           </p>
           {modo === 'voronoi' ? (
-            <p className="text-sm text-gray-700">🖱 Haz click en cualquier lugar para agregar una región.</p>
+            <p className="text-sm text-gray-700">🖱 Haz click para agregar regiones.</p>
           ) : (
             <div className="text-sm text-gray-700 space-y-1">
               <p>🔵 <b>Click vacío:</b> Crear Nodo</p>
-              <p>🔗 <b>Click en 2 Nodos:</b> Conectar (Crear enlace)</p>
+              <p>🔗 <b>Click en 2 Nodos:</b> Conectar</p>
             </div>
           )}
         </div>
@@ -57,7 +57,7 @@ export default function MapCanvas({
         onClick={onCanvasClick}
         className={`w-full h-full bg-gray-100 ${animando ? 'cursor-default' : 'cursor-crosshair'}`}
       >
-        {/* --- MODO VORONOI --- */}
+        {/* --- CAPA 1: MODO VORONOI (Solo se renderiza si modo === 'voronoi') --- */}
         {modo === 'voronoi' && poligonos.map((poly) => {
           const isCurrent = historialPasos[pasoActual]?.node == poly.id.toString();
           const color = coloresRegiones[poly.id] || '#ffffff';
@@ -77,7 +77,7 @@ export default function MapCanvas({
           );
         })}
 
-        {/* --- MODO GRAFO --- */}
+        {/* --- CAPA 2: MODO GRAFO (Solo se renderiza si modo === 'grafo') --- */}
         {modo === 'grafo' && (
           <>
             {enlaces.map((link, i) => {
