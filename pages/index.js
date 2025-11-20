@@ -8,7 +8,10 @@ import ControlPanel from '../components/ControlPanel';
 import LogPanel from '../components/LogPanel';
 import { construirAdyacencia } from '../utils/mapHelpers';
 
-const API_URL = '/api/solve';
+// Detectamos si estamos en producción (Vercel) o en desarrollo local
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api/solve'                     // En Vercel (Ruta relativa)
+  : 'http://127.0.0.1:8000/api/solve'; // En Local (Puerto separado)
 const COLORES_DISPONIBLES = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
 
 export default function MapColoringApp() {
